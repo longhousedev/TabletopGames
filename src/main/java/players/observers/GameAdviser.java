@@ -46,7 +46,6 @@ public class GameAdviser implements IGameListener {
         this.player = player;
         this.filter = filter;
         this.fileName = fileName == null ? this.getClass().getSimpleName() + ".txt" : fileName;
-        setupWriter();
     }
 
     private void setupWriter() {
@@ -117,7 +116,11 @@ public class GameAdviser implements IGameListener {
     }
 
     protected void logIntervention(Event event, AbstractAction action, AbstractPlayer actingPlayer) {
-        if (writer == null) return;
+        if (writer == null){
+            setupWriter();
+            if (writer == null)
+                return;
+        }
         double agentValue = player instanceof MCTSPlayer mcts ? mcts.getValue(event.action) : 0.0;
         double adviserValue = player instanceof MCTSPlayer mcts ? mcts.getValue(action) : 0.0;
 
