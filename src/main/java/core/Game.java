@@ -66,13 +66,6 @@ public class Game {
     private int nActionsPerTurn, nActionsPerTurnSum, nActionsPerTurnCount;
     private boolean pause, stop;
     private boolean debug = false;
-    // Video recording
-    private Rectangle areaBounds;
-    private boolean recordingVideo = false;
-    String fileName = "output.mp4";
-    String formatName = "mp4";
-    String codecName = null;
-    int snapsPerSecond = 10;
     private int turnPause;
     protected AbstractAction overrideAction;
     protected String savedStateDirectory = "SavedStates";
@@ -161,11 +154,6 @@ public class Game {
             frame.setFrameProperties();
             frame.validate();
             frame.pack();
-
-            // Video recording setup
-            if (game.recordingVideo) {
-                game.areaBounds = new Rectangle(0, 0, frame.getWidth(), frame.getHeight());
-            }
 
             Timer guiUpdater = new Timer((int) game.getCoreParameters().frameSleepMS, event -> game.updateGUI(gui, frame));
             guiUpdater.start();
