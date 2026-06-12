@@ -127,7 +127,7 @@ public class GameAdviser implements IGameListener {
         try {
             writer.write(String.format("%s\t%s\t%s\t%.3g\t%s\t%.3g\t%d\t%d\t%d\t%d\n",
                     event.playerID, actingPlayer.toString(),
-                    event.action.toString(), agentValue, action.toString(), adviserValue,
+                    action.getString(event.state), agentValue, event.action.getString(event.state), adviserValue,
                     event.state.getGameID(), event.state.getTurnCounter(), event.state.getRoundCounter(), event.state.getGameTick()));
         } catch (IOException e) {
             throw new RuntimeException(e);
