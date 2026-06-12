@@ -158,6 +158,7 @@ public class RoundRobinTournament extends AbstractTournament {
             gameTracker.init(game, nPlayers, agentNames);
             game.addListener(gameTracker);
         }
+        game.setSavedStatesDirectory(config.getOrDefault(RunArg.destDir, "").toString() + File.separator + "SavedStates");
 
         LinkedList<Integer> matchUp = new LinkedList<>();
         // add outer loop if we have tournamentSeeds enabled; if not this will just run once

@@ -1,9 +1,7 @@
 package games.backgammon;
 
-import core.AbstractParameters;
 import core.components.Dice;
 import core.components.Token;
-import evaluation.optimisation.TunableParameters;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 

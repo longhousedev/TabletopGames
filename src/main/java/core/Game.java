@@ -75,6 +75,7 @@ public class Game {
     int snapsPerSecond = 10;
     private int turnPause;
     protected AbstractAction overrideAction;
+    protected String savedStateDirectory = "SavedStates";
 
     /**
      * Game constructor. Receives a list of players, a forward model and a game state. Sets unique and final
@@ -494,7 +495,7 @@ public class Game {
             }
             // if requested, save a copy of the full undeterminized game state (we do this in the Game loop to avoid passing the real state to agents)
             if (action.saveGame() && gameState instanceof IToJSON serialisableGameState) {
-                String directory = String.format("SavedStates%s%s%sG%d", File.separator, gameType.name(), File.separator, gameState.getGameID());
+                String directory = String.format("%s%s%s%sG%d", savedStateDirectory, File.separator, gameType.name(), File.separator, gameState.getGameID());
                 Utils.createDirectory(directory);
                 String filename = String.format("%sP%d_Tick%d.json", directory + File.separator, activePlayer, gameState.getGameTick());
                 JSONUtils.writeJSON(serialisableGameState.toJSON(), filename);
@@ -667,6 +668,13 @@ public class Game {
     public void clearListeners() {
         listeners.clear();
         getGameState().clearListeners();
+    }
+
+    public void setSavedStatesDirectory(String dir) {
+        savedStateDirectory = dir;
+    }
+    public String getSavedStatesDirectory() {
+        return savedStateDirectory;
     }
 
     /**
