@@ -69,8 +69,15 @@ public class Dice extends Component implements IToJSON {
                 pdf[i] = ((Number) arr.get(i)).doubleValue();
             }
             double total = Arrays.stream(pdf).sum();
-            if (Math.abs(total - 1.0) > 0.000001)
+            // The standard JSON format stores numbers to 3 sig fig.
+            // We may therefore need to adjust to make sure the PDF sums to 1
+            if (Math.abs(total - 1.0) > 0.01)
                 throw new IllegalArgumentException("Invalid PDF in Dice: " + Arrays.toString(pdf));
+            else if (Math.abs(total - 1.0) > 1e-6) {
+                for (int i = 0; i < pdf.length; i++) {
+                    pdf[i] /= total;
+                }
+            }
         }
         if (data.containsKey("value")) {
             this.value = ((Number) data.get("value")).intValue();
