@@ -5,15 +5,13 @@ import core.actions.LogEvent;
 import core.components.Area;
 import core.components.Component;
 import core.components.PartialObservableDeck;
-import core.interfaces.IComponentContainer;
-import core.interfaces.IExtendedSequence;
-import core.interfaces.IGameEvent;
-import core.interfaces.IGamePhase;
+import core.interfaces.*;
 import evaluation.listeners.IGameListener;
 import evaluation.metrics.Event;
 import evaluation.optimisation.TunableParameters;
 import games.GameType;
 import utilities.ElapsedCpuChessTimer;
+import utilities.JSONUtils;
 import utilities.Pair;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -42,7 +40,7 @@ public abstract class AbstractGameState {
     /**
      * The following fields are serializable into JSON with abstractGameStateToJSON.
      * They are then populated on reconstruction from JSON with loadAbstractGameStateFromJSON.
-     *
+     * <p>
      * GameParameters are only fully supported in serialization/deserialization if they extend TunableParameters
      * (which is the only case in which they can be easily changed from their default values)
      */
@@ -65,23 +63,23 @@ public abstract class AbstractGameState {
 
     /**
      * The fields below are NOT serialized / re-loaded
-     *
+     * <p>
      * allComponents is built from _getAllComponents() when the state is initialised
      * history/historyText are omitted to save space, and they are intended to provide an audit trail for debugging, and no functionality should ever be based on them
-     *
+     * <p>
      * gamePhase needs to be serialized/reloaded, but that has to be done currently in the child implementation
-     *                  as we have no means of knowing the class to instantiate
-     *
+     * as we have no means of knowing the class to instantiate
+     * <p>
      * actionsInProgress could be serialized, but that requires the game implementation to support this for all ExtendedSequence implementations
-     *                  for the moment TAGG will throw an error if serialization is attempted with any active actions on the stack
-     *
-     *  coreGameParameters deals with competition disqualification and non-standard action spaces. If could be serialized straightforwardly if needed
-     *                  but for the moment any reload will just pick up the defaults
-     *
-     *  gameListeners and playerTimers are also not considered part of the 'real' game state, much like CoreParameters. If these are
-     *                  important then they will need to be set up post reload
-     *
-     *  random number generators are excluded deliberately. Any future need to rerun a game multiple times with the same seed is not currently supported (but would not be difficult)
+     * for the moment TAGG will throw an error if serialization is attempted with any active actions on the stack
+     * <p>
+     * coreGameParameters deals with competition disqualification and non-standard action spaces. If could be serialized straightforwardly if needed
+     * but for the moment any reload will just pick up the defaults
+     * <p>
+     * gameListeners and playerTimers are also not considered part of the 'real' game state, much like CoreParameters. If these are
+     * important then they will need to be set up post reload
+     * <p>
+     * random number generators are excluded deliberately. Any future need to rerun a game multiple times with the same seed is not currently supported (but would not be difficult)
      */
     // Current game phase
     protected IGamePhase gamePhase;
@@ -155,24 +153,40 @@ public abstract class AbstractGameState {
     public CoreParameters getCoreGameParameters() {
         return coreGameParameters;
     }
+
     public final CoreConstants.GameResult getGameStatus() {
         return gameStatus;
     }
+
     public final AbstractParameters getGameParameters() {
         return this.gameParameters;
     }
-    public int getNPlayers() { return nPlayers; }
-    public int getNTeams() { return nTeams; }
+
+    public int getNPlayers() {
+        return nPlayers;
+    }
+
+    public int getNTeams() {
+        return nTeams;
+    }
+
     /**
      * Returns the team number the specified player is on.
      * This defaults to one team per player and should be overridden
      * in child classes if relevant to the game
      */
-    public int getTeam(int player) { return player;}
+    public int getTeam(int player) {
+        return player;
+    }
+
     public int getCurrentPlayer() {
         return isActionInProgress() ? actionsInProgress.peek().getCurrentPlayer(this) : turnOwner;
     }
-    public final CoreConstants.GameResult[] getPlayerResults() {return playerResults;}
+
+    public final CoreConstants.GameResult[] getPlayerResults() {
+        return playerResults;
+    }
+
     public final Set<Integer> getWinners() {
         Set<Integer> winners = new HashSet<>();
         for (int i = 0; i < playerResults.length; i++) {
@@ -180,6 +194,7 @@ public abstract class AbstractGameState {
         }
         return winners;
     }
+
     public final Set<Integer> getTied() {
         Set<Integer> tied = new HashSet<>();
         for (int i = 0; i < playerResults.length; i++) {
@@ -187,12 +202,15 @@ public abstract class AbstractGameState {
         }
         return tied;
     }
+
     public final IGamePhase getGamePhase() {
         return gamePhase;
     }
+
     public final ElapsedCpuChessTimer[] getPlayerTimer() {
         return playerTimer;
     }
+
     public final GameType getGameType() {
         return gameType;
     }
@@ -201,18 +219,29 @@ public abstract class AbstractGameState {
     protected void setHistoryAt(int index, Pair<Integer, AbstractAction> action) {
         history.set(index, action);
     }
+
     /**
      * @return All actions that have been executed on this state since reset()/initialisation
      */
-    public List<Pair<Integer, AbstractAction>> getHistory() { return new ArrayList<>(history);}
+    public List<Pair<Integer, AbstractAction>> getHistory() {
+        return new ArrayList<>(history);
+    }
+
     public List<String> getHistoryAsText() {
         return new ArrayList<>(historyText);
     }
+
     public int getGameID() {
         return gameID;
     }
-    public int getRoundCounter() {return roundCounter;}
-    public int getTurnCounter() {return turnCounter;}
+
+    public int getRoundCounter() {
+        return roundCounter;
+    }
+
+    public int getTurnCounter() {
+        return turnCounter;
+    }
 
     /**
      * In general getCurrentPlayer() should be used to find the current player.
@@ -221,19 +250,27 @@ public abstract class AbstractGameState {
      *
      * @return the player whose turn it currently is (which may be different to the next player to act)
      */
-    public int getTurnOwner() {return turnOwner;}
-    public int getFirstPlayer() {return firstPlayer;}
+    public int getTurnOwner() {
+        return turnOwner;
+    }
+
+    public int getFirstPlayer() {
+        return firstPlayer;
+    }
 
     // Setters
     void setCoreGameParameters(CoreParameters coreGameParameters) {
         this.coreGameParameters = coreGameParameters;
     }
+
     public final void setGameStatus(CoreConstants.GameResult status) {
         this.gameStatus = status;
     }
+
     public final void setPlayerResult(CoreConstants.GameResult result, int playerIdx) {
         this.playerResults[playerIdx] = result;
     }
+
     public final void setGamePhase(IGamePhase gamePhase) {
         this.gamePhase = gamePhase;
     }
@@ -241,9 +278,15 @@ public abstract class AbstractGameState {
     void setGameID(int id) {
         gameID = id;
     } // package level deliberately
-    void advanceGameTick() {tick++;}
 
-    public void setTurnOwner(int newTurnOwner) {turnOwner = newTurnOwner;}
+    void advanceGameTick() {
+        tick++;
+    }
+
+    public void setTurnOwner(int newTurnOwner) {
+        turnOwner = newTurnOwner;
+    }
+
     public void setFirstPlayer(int newFirstPlayer) {
         firstPlayer = newFirstPlayer;
         turnOwner = newFirstPlayer;
@@ -254,11 +297,13 @@ public abstract class AbstractGameState {
      * Use this as a default; there is no need to create your own.
      * The one exception to this guideline is in the copy() method, where redeterminisation should *not* use this generator.
      * It should use redeterminisationRnd instead.
+     *
      * @return the Random to use for game decisions/events
      */
     public Random getRnd() {
         return rnd;
     }
+
     public void addListener(IGameListener listener) {
         if (!listeners.contains(listener))
             listeners.add(listener);
@@ -276,7 +321,11 @@ public abstract class AbstractGameState {
     public final boolean isNotTerminalForPlayer(int player) {
         return playerResults[player] == GAME_ONGOING && gameStatus == GAME_ONGOING;
     }
-    public final int getGameTick() {return tick;}
+
+    public final int getGameTick() {
+        return tick;
+    }
+
     public final Component getComponentById(int id) {
         Component c = allComponents.getComponent(id);
         if (c == null) {
@@ -538,7 +587,9 @@ public abstract class AbstractGameState {
      *
      * @return the number of levels of tiebreaks in the game
      */
-    public int getTiebreakLevels() {return 5;}
+    public int getTiebreakLevels() {
+        return 5;
+    }
 
     /**
      * Returns the ordinal position of a player using getGameScore().
@@ -752,10 +803,11 @@ public abstract class AbstractGameState {
     }
 
     /**
-     * This converts all fields within AbstractGameState to a JSON object (excpet for GameParameters, which need to be done in the caller).
+     * This converts all fields within AbstractGameState to a JSON object.
      * An extension of AbstractGameState that implements IToJSON (and hence is serializable), calls this
      * method to create one JSON moiety in the serialized game state.
      */
+    @SuppressWarnings("unchecked")
     public JSONObject abstractGameStateToJSON() {
         if (isActionInProgress())
             throw new IllegalStateException("Cannot yet serialize game state with ongoing actions");
@@ -774,7 +826,7 @@ public abstract class AbstractGameState {
         json.put("firstPlayer", firstPlayer);
         json.put("nPlayers", nPlayers);
         json.put("nTeams", nTeams);
-        if (gameParameters instanceof TunableParameters tunableParameters) {
+        if (gameParameters instanceof TunableParameters<?> tunableParameters) {
             json.put("gameParams", tunableParameters.instanceToJSON(true, new HashMap<>()));
         }
 
@@ -783,6 +835,21 @@ public abstract class AbstractGameState {
             playerResultsJson.add(res.name());
         }
         json.put("playerResults", playerResultsJson);
+
+        // we also process the actionStack - but everything on it needs to implement IToJSON
+        // note that iterating over a Stack is in FIFO order, not the LIFO of pop()
+        // this works here because we push in the first item in the array
+        if (isActionInProgress()) {
+            JSONArray actionsInProgressJson = new JSONArray();
+            for (IExtendedSequence action : actionsInProgress) {
+                if (action instanceof IToJSON toJSONAction) {
+                    actionsInProgressJson.add(toJSONAction.toJSON());
+                } else {
+                    throw new IllegalStateException("Cannot serialize game state with ongoing actions that do not implement IToJSON : " + action.getClass().getName());
+                }
+                json.put("actionsInProgress", actionsInProgressJson);
+            }
+        }
         return json;
     }
 
@@ -816,6 +883,12 @@ public abstract class AbstractGameState {
                 this.gamePhase = CoreConstants.DefaultGamePhase.valueOf(phaseStr);
             } catch (Exception e) {
                 // Ignore, subclass is expected to handle this
+            }
+        }
+        JSONArray actionsInProgressJson = (JSONArray) json.get("actionsInProgress");
+        if (actionsInProgressJson != null) {
+            for (Object action : actionsInProgressJson) {
+                this.actionsInProgress.push(JSONUtils.loadClassFromJSON((JSONObject) action));
             }
         }
     }
