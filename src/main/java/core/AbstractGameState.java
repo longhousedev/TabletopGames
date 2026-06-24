@@ -36,7 +36,6 @@ import static evaluation.optimisation.TunableParameters.loadFromJSON;
  */
 public abstract class AbstractGameState {
 
-
     /**
      * The following fields are serializable into JSON with abstractGameStateToJSON.
      * They are then populated on reconstruction from JSON with loadAbstractGameStateFromJSON.
@@ -70,8 +69,8 @@ public abstract class AbstractGameState {
      * gamePhase needs to be serialized/reloaded, but that has to be done currently in the child implementation
      * as we have no means of knowing the class to instantiate
      * <p>
-     * actionsInProgress could be serialized, but that requires the game implementation to support this for all ExtendedSequence implementations
-     * for the moment TAGG will throw an error if serialization is attempted with any active actions on the stack
+     * actionsInProgress is serialized, but that requires the game implementation to support this for all ExtendedSequence implementations
+     * TAG will throw an error if serialization is attempted with any active actions on the stack that do not implement IToJSON
      * <p>
      * coreGameParameters deals with competition disqualification and non-standard action spaces. If could be serialized straightforwardly if needed
      * but for the moment any reload will just pick up the defaults
@@ -809,8 +808,6 @@ public abstract class AbstractGameState {
      */
     @SuppressWarnings("unchecked")
     public JSONObject abstractGameStateToJSON() {
-        if (isActionInProgress())
-            throw new IllegalStateException("Cannot yet serialize game state with ongoing actions");
         JSONObject json = new JSONObject();
         json.put("gameType", gameType.name());  // for info
         json.put("gameStatus", gameStatus.name());

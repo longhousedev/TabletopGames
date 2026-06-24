@@ -60,7 +60,6 @@ public class BGStateJSON {
 
         // this includes parameters and game phase
         json.put("abstractGameState", state.abstractGameStateToJSON());
-    //    json.put("gameParams", ((TunableParameters<?>) state.getGameParameters()).instanceToJSON(true, new HashMap<>()));
 
         json.put("piecesBorneOff", JSONUtils.intArrayToJSON(state.piecesBorneOff));
         json.put("blots", JSONUtils.intArrayToJSON(state.blots));
