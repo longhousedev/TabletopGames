@@ -24,6 +24,7 @@ import java.util.Map;
  */
 public class Connect4StateJSON {
 
+    @SuppressWarnings("unchecked")
     public static JSONObject toJSON(Connect4GameState state) {
         JSONObject json = new JSONObject();
         json.put("class", "games.connect4.Connect4GameState");

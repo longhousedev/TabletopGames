@@ -12,6 +12,13 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.test.skip>true</maven.test.skip>
         <build.documentation>www.tabletopgames.ai/wiki/maven</build.documentation>
+        <!-- Empty default for the surefire argLine. The surefire <argLine> uses late property
+             expansion (@{argLine}) so that a coverage agent (e.g. jacoco:prepare-agent) can inject
+             its own javaagent at build time. With no such agent configured, this default lets the
+             @{argLine} token resolve to empty rather than the literal "{argLine}" (which the JVM
+             would try to open as an @argfile and crash the forked test VM). IntelliJ ignores this
+             config and runs tests with its own JUnit runner. -->
+        <argLine></argLine>
     </properties>
 
     <groupId>ai.tabletopgames</groupId>

@@ -4,8 +4,11 @@ import core.AbstractGameState;
 import core.actions.AbstractAction;
 import core.components.Deck;
 import core.interfaces.IExtendedSequence;
+import core.interfaces.IToJSON;
 import games.explodingkittens.ExplodingKittensGameState;
 import games.explodingkittens.cards.ExplodingKittensCard;
+import org.json.simple.JSONObject;
+import utilities.JSONUtils;
 
 import java.util.List;
 import java.util.Objects;
@@ -13,7 +16,7 @@ import java.util.Objects;
 import static games.explodingkittens.cards.ExplodingKittensCard.CardType.NOPE;
 
 
-public class NopeableAction implements IExtendedSequence {
+public class NopeableAction implements IExtendedSequence, IToJSON {
 
     int currentInterrupter = -1;
     int lastCardPlayedBy;
@@ -33,6 +36,27 @@ public class NopeableAction implements IExtendedSequence {
         this.originalAction = originalAction.copy();
         this.currentInterrupter = currentInterrupter;
         this.nopes = nopes;
+    }
+
+    /** Reconstructs the in-progress sequence from JSON produced by {@link #toJSON}, restoring its
+     * local state directly (without consulting the game state, as the live constructor does). */
+    public NopeableAction(JSONObject json) {
+        this.lastCardPlayedBy = ((Number) json.get("lastCardPlayedBy")).intValue();
+        this.currentInterrupter = ((Number) json.get("currentInterrupter")).intValue();
+        this.nopes = ((Number) json.get("nopes")).intValue();
+        this.originalAction = JSONUtils.loadClassFromJSON((JSONObject) json.get("originalAction"));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("class", getClass().getName());
+        json.put("lastCardPlayedBy", lastCardPlayedBy);
+        json.put("currentInterrupter", currentInterrupter);
+        json.put("nopes", nopes);
+        json.put("originalAction", originalAction.toJSON());
+        return json;
     }
 
     @Override

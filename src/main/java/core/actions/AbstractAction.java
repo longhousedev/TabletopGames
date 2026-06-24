@@ -7,7 +7,7 @@ import java.util.Set;
 
 public abstract class AbstractAction implements IPrintable {
 
-    protected boolean saveGameBeforeAction = false;
+    private boolean saveGameBeforeAction = false;
     /**
      * Executes this action, applying its effect to the given game state. Can access any component IDs stored
      * through the AbstractGameState.getComponentById(int id) method.
@@ -78,11 +78,11 @@ public abstract class AbstractAction implements IPrintable {
      * This is to indicate that the move is a 'critical' one in some sense.
      * This will only trigger action if the AbstractGameState implementation supports serialisation to a game state via the IToJson interface
      */
-    public boolean saveGame() {
+    public final boolean saveGame() {
         return saveGameBeforeAction;
     }
 
-    public void setSaveGame(boolean saveGame) {
+    public final void setSaveGame(boolean saveGame) {
         this.saveGameBeforeAction = saveGame;
     }
 }

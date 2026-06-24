@@ -54,6 +54,7 @@ public class BGStateJSON {
         state.playerTrackMapping = JSONUtils.intMatrixFromJSON((JSONArray) json.get("playerTrackMapping"));
     }
 
+    @SuppressWarnings("unchecked")
     public static JSONObject toJSON(BGGameState state) {
         JSONObject json = new JSONObject();
         json.put("class", "games.backgammon.BGGameState");
