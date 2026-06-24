@@ -35,7 +35,10 @@ public class Connect4GameParameters extends TunableParameters<Game> {
 
     @Override
     public boolean _equals(Object o) {
-        return super.equals(o);
+        // width/height/winCount are tunable parameters, so they are already compared by
+        // TunableParameters.equals (via currentValues). Calling super.equals here would recurse
+        // infinitely, as TunableParameters.equals delegates back to _equals.
+        return o instanceof Connect4GameParameters;
     }
 
     @Override
