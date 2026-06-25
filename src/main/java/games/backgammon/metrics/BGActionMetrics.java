@@ -3,6 +3,7 @@ package games.backgammon.metrics;
 import core.AbstractPlayer;
 import core.Game;
 import core.actions.AbstractAction;
+import core.actions.DoNothing;
 import core.interfaces.IGameEvent;
 import evaluation.listeners.MetricsGameListener;
 import evaluation.metrics.AbstractMetric;
@@ -47,14 +48,15 @@ public class BGActionMetrics implements IMetricsCollection {
                 case LoadDice ignored -> "LoadDice";
                 case MovePiece mp when (mp.from == -1) -> "BearOn";
                 case MovePiece mp when (mp.to == -1) -> "BearOff";
-                default -> "Move";
+                case MovePiece ignored -> "Move";
+                case DoNothing ignored -> "DoNothing";
+                default -> "Unknown";
             };
-            if (type.equals("Move")) {
-                MovePiece move = (MovePiece) action;
+            if (action instanceof MovePiece move) {
                 // get number of pieces on from/to points
-                int fromCount = state.getPiecesOnPoint(e.playerID, move.from);
-                int toCountOwn = state.getPiecesOnPoint(e.playerID, move.to);
-                int toCountOpp = state.getPiecesOnPoint(1 - e.playerID, move.to);
+                int fromCount = move.from > -1 ? state.getPiecesOnPoint(e.playerID, move.from) : -1;
+                int toCountOwn = move.to > -1 ? state.getPiecesOnPoint(e.playerID, move.to) : -1;
+                int toCountOpp = move.to > -1 ? state.getPiecesOnPoint(1 - e.playerID, move.to) : 0;
                 if (toCountOpp == 1) {
                     type = "Blot";
                 }
@@ -74,7 +76,7 @@ public class BGActionMetrics implements IMetricsCollection {
         public Map<String, Class<?>> getColumns(int nPlayersPerGame, Set<String> playerNames) {
             Map<String, Class<?>> columns = new HashMap<>();
             columns.put("Type", String.class);
-            columns.put("From", String.class);
+            columns.put("From", Integer.class);
             columns.put("To", Integer.class);
             return columns;
         }
