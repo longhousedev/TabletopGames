@@ -166,8 +166,8 @@ public class ExpertIteration {
         // Check to see if we are re-starting a previously aborted run
         Pair<Integer, Integer> completedIterations = checkCompletedIterations();
         int restartAtIteration = completedIterations.a;
-        boolean restartWithTuning = completedIterations.b > 0 && !Objects.equals(completedIterations.a, completedIterations.b);
-        iter = restartAtIteration;
+        boolean restartWithTuning = completedIterations.b > 0 && !Objects.equals(completedIterations.a, completedIterations.b)
+                && restartAtIteration < (int) config.get(RunArg.expertIterations);        iter = restartAtIteration;
         if (completedIterations.a > 0 && completedIterations.b > 0) {
             System.out.printf("Restarting from iteration %d (with tuning: %b)%n", restartAtIteration, restartWithTuning);
         }
