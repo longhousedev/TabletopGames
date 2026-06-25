@@ -249,6 +249,8 @@ public class BGGameState extends AbstractGameState implements IToJSON {
 
     public int[] getAvailableDiceValues() {
         // only return values for dice not yet used
+        if (availableDiceValues == null)
+            return new int[0];
         int[] values = new int[availableDiceValues.length];
         int count = 0;
         for (int i = 0; i < diceUsed.length; i++) {
