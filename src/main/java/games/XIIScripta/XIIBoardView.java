@@ -311,15 +311,27 @@ public class XIIBoardView extends BGBoardView {
     private void drawBarAndBearOff(Graphics2D g2d) {
         int[] bar = getSpacePosition(0);
         int[] off = getSpacePosition(37);
-        drawTray(g2d, bar[0], bar[1], "BAR", piecesPerPoint[0][0], piecesPerPoint[1][0]);
-        drawTray(g2d, off[0], off[1], "OFF", piecesPerPoint[0][37], piecesPerPoint[1][37]);
+        drawTray(g2d, bar[0], bar[1], "BAR", piecesPerPoint[0][0], piecesPerPoint[1][0], null);
+
+        // Highlight the OFF tray when bearing-off moves are available, matching regular square logic
+        Color offHighlight = null;
+        if (firstClick == -1) {
+            for (MovePiece action : validActions) {
+                if (action.to == -1) { offHighlight = new Color(214, 196, 120); break; }
+            }
+        } else {
+            int fromGs = guiToGameStateSpace(firstClick);
+            for (MovePiece action : validActions) {
+                if (action.from == fromGs && action.to == -1) { offHighlight = new Color(196, 92, 78); break; }
+            }
+        }
+        drawTray(g2d, off[0], off[1], "OFF", piecesPerPoint[0][37], piecesPerPoint[1][37], offHighlight);
     }
 
-    private void drawTray(Graphics2D g2d, int x, int y, String label, int p0, int p1) {
-        // Tray background, slightly darker than a normal square so it reads as "off-board"
-        g2d.setColor(TRAY_STONE);
+    private void drawTray(Graphics2D g2d, int x, int y, String label, int p0, int p1, Color highlight) {
+        g2d.setColor(highlight != null ? highlight : TRAY_STONE);
         g2d.fillRect(x, y, squareSize, squareSize);
-        g2d.setColor(Color.BLACK);
+        g2d.setColor(STONE_BORDER);
         g2d.setStroke(new BasicStroke(1));
         g2d.drawRect(x, y, squareSize, squareSize);
 

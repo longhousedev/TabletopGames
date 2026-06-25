@@ -116,6 +116,113 @@ keys in the environment.
 - `data/` — game assets (images, card/board definitions) loaded by some games; shipped into the
   Docker image.
 
+## Unit testing
+
+Tests live under `src/test/java/` mirroring the main source tree (e.g. game tests in
+`src/test/java/games/<name>/`, core tests in `src/test/java/core/`). The framework is **JUnit 4**
+with **Mockito 5**; there is no JUnit 5 in the project.
+
+**Any test written during development should be committed to the repository** unless it is purely
+throwaway scaffolding (e.g. a one-off render harness or a `main` used for manual inspection or to check a rendered image). If a
+test helped verify a bug fix or a new feature, it belongs permanently in the test suite.
+
+### Naming
+
+- Class: `<Subject>Test` or `Test<Subject>` (both styles exist; prefer suffix form for new work).
+- Methods: descriptive camelCase, no mandatory `test` prefix — `availableActionsExcludeBlockedMoves()`
+  is clearer than `testAvailableActionsExcludeBlockedMoves()`.
+
+### Structure
+
+```java
+public class XIIScriptaForwardModelTest {
+
+    BGGameState state;
+    BGForwardModel fm;
+
+    @Before
+    public void setup() {
+        Game game = GameType.XIIScripta.createGameInstance(2);
+        game.reset(List.of(new RandomPlayer(), new RandomPlayer()));
+        state = (BGGameState) game.getGameState();
+        fm = (BGForwardModel) game.getForwardModel();
+    }
+
+    @Test
+    public void bearOffOnlyWhenAllPiecesHome() { ... }
+}
+```
+
+- Use `@Before` (not `@BeforeEach`) for shared setup.
+- Use standard JUnit 4 assertions (`assertEquals`, `assertTrue`, etc.) — no external assertion
+  libraries are used in this project.
+- No shared base test class; each test class is self-contained.
+
+### Setting up game state
+
+Two patterns are in use — pick the one that fits:
+
+1. **Factory + reset** (preferred for integration-level tests):
+   ```java
+   Game game = GameType.CantStop.createGameInstance(3, 34, params);
+   game.reset(players);
+   BGGameState state = (BGGameState) game.getGameState();
+   ```
+
+2. **Direct instantiation** (preferred for tightly scoped unit tests):
+   ```java
+   DominionGameState state = new DominionGameState(new DominionFGParameters(), 2);
+   new DominionForwardModel().setup(state);
+   ```
+
+### Setting up game state from a saved JSON file
+
+For games that support JSON serialisation, load a saved state rather than simulating to reach a
+scenario — simulation can land on awkward mid-tick states (e.g. null dice rolls). Edit the JSON
+fields to vary conditions rather than forcing values via reflection:
+
+```java
+Game game = GameType.XIIScripta.createGameInstance(2);
+game.reset(List.of(new RandomPlayer(), new RandomPlayer()));
+BGGameState state = (BGGameState) game.getGameState();
+BGStateJSON.loadFromJSON(state, JSONUtils.loadJSONFile("P0_Tick340.json"));
+// Edit e.g. "piecesBorneOff" : [4, 7] in the JSON to test bear-off logic
+```
+
+For GUI/board-view verification, paint the view to a `BufferedImage` and write a PNG:
+
+```java
+MyBoardView view = new MyBoardView((MyForwardModel) game.getForwardModel());
+view.update(state);
+view.setSize(view.getPreferredSize());
+BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+view.paint(img.getGraphics());
+ImageIO.write(img, "png", new File("render.png"));
+```
+
+Remove any throwaway render harness files and output PNGs before committing.
+
+### Running tests
+
+**Never run the full suite during development** — it includes slow integration tests. Always target
+a specific class or method.
+
+```bash
+# 1. Build the classpath once (output to cp.txt, committed to .gitignore)
+mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
+
+# 2. Compile tests
+mvn test-compile -Dmaven.test.skip=false
+
+# 3. Run a single test class
+java -cp "target/classes;target/test-classes;$(cat cp.txt)" \
+     org.junit.runner.JUnitCore games.cantstop.TestCantStop
+```
+
+`java` may not be on PATH; use the full JDK path if needed
+(e.g. `C:/Users/<you>/.jdks/ms-21.0.10/bin/java`). Alternatively, run directly from the IDE
+by right-clicking the test class or method.
+
 ## Python
 
 `core.PyTAG` + `players/python` expose a Python-facing API (PyTAG) for RL/gym-style use.
