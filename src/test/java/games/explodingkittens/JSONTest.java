@@ -85,11 +85,13 @@ public class JSONTest {
         state.setActionInProgress(new NopeableAction(0, new PlayEKCard(SKIP), state));
 
         JSONObject json = state.toJSON();
-        JSONUtils.writeJSON(json, "ekTestFile.json");
+        JSONUtils.writeJSON(json, "src/ekTestFile.json");
 
-        ExplodingKittensGameState loaded = JSONUtils.loadClassFromFile("ekTestFile.json");
+        ExplodingKittensGameState loaded = JSONUtils.loadClassFromFile("src/ekTestFile.json");
 
         assertEquals(state, loaded);
-        assertTrue(new File("ekTestFile.json").delete());
+        // we need to ensure the file root is picked up correctly to delete this
+        File file = new File("src/ekTestFile.json");
+        file.delete();
     }
 }

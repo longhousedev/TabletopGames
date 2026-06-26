@@ -259,7 +259,8 @@ public class TunableParametersTest {
     @Test
     public void settingsFromJSONFailsToMatchDefault() {
         // If the searchSpace defines a fixed value for a parameter, then we should use this
-        ITPSearchSpace<AbstractPlayer> itp = new ITPSearchSpace<>(params, "src/test/java/evaluation/MCTSSearch_Heuristic.json");
+        ITPSearchSpace<AbstractPlayer> itp = new ITPSearchSpace<>(params,
+                "src/test/java/evaluation/MCTSSearch_Heuristic.json");
         try {
             int[] settings = itp.settingsFromJSON("src/test/java/evaluation/MCTSSearch_HeuristicSampleIncorrectII.json");
             JSONObject json = itp.constructAgentJSON(settings);

@@ -52,7 +52,7 @@ public abstract class TunableParameters<T> extends AbstractParameters implements
             JSONObject rawData = (JSONObject) jsonParser.parse(reader);
             loadFromJSON(params, rawData);
         } catch (Exception e) {
-            throw new AssertionError(e.getClass().toString() + " : " + e.getMessage() + " : problem loading TunableParameters from file " + filename);
+            throw new AssertionError(e.getClass() + " : " + e.getMessage() + " : problem loading TunableParameters from file " + filename);
         }
     }
 
@@ -65,7 +65,6 @@ public abstract class TunableParameters<T> extends AbstractParameters implements
 
         // Static parameter, load from json and exclude from tuning
         // THIS IS UNCHECKED
-        // TODO Add validation once I figure
         for (String pName : params.staticParameters) {
             params.currentValues.put(pName, rawData.getOrDefault(pName, params.getDefaultParameterValue(pName)));
         }
@@ -407,7 +406,7 @@ public abstract class TunableParameters<T> extends AbstractParameters implements
     }
 
     @Override
-    public ITunableParameters instanceFromJSON(JSONObject jsonObject) {
+    public ITunableParameters<T> instanceFromJSON(JSONObject jsonObject) {
         return JSONUtils.loadClassFromJSON(jsonObject);
     }
 

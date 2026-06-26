@@ -321,6 +321,10 @@ public class MCTSPlayer extends AbstractPlayer implements IAnyTimePlayer, IHasSt
     public double getValue(AbstractAction action) {
         return root.getValue(action);
     }
+    // Proportion of visits - this does not take account of nValidVisits (which would be especially important away from root node)
+    public double getVisitProportion(AbstractAction action) {
+        return root.actionVisits(action) / (double) root.getVisits();
+    }
 
     @Override
     public void finalizePlayer(AbstractGameState state) {
