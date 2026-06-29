@@ -115,19 +115,19 @@ public class GameAdviser implements IGameListener {
         return game;
     }
 
-    protected void logIntervention(Event event, AbstractAction action, AbstractPlayer actingPlayer) {
+    protected void logIntervention(Event event, AbstractAction advisedAction, AbstractPlayer actingPlayer) {
         if (writer == null){
             setupWriter();
             if (writer == null)
                 return;
         }
         double agentValue = player instanceof MCTSPlayer mcts ? mcts.getValue(event.action) : 0.0;
-        double adviserValue = player instanceof MCTSPlayer mcts ? mcts.getValue(action) : 0.0;
+        double adviserValue = player instanceof MCTSPlayer mcts ? mcts.getValue(advisedAction) : 0.0;
 
         try {
             writer.write(String.format("%s\t%s\t%s\t%.3g\t%s\t%.3g\t%d\t%d\t%d\t%d\n",
                     event.playerID, actingPlayer.toString(),
-                    action.getString(event.state), agentValue, event.action.getString(event.state), adviserValue,
+                    event.action.getString(event.state), agentValue, advisedAction.getString(event.state), adviserValue,
                     event.state.getGameID(), event.state.getTurnCounter(), event.state.getRoundCounter(), event.state.getGameTick()));
         } catch (IOException e) {
             throw new RuntimeException(e);

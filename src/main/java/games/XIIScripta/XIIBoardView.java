@@ -67,7 +67,6 @@ public class XIIBoardView extends BGBoardView {
                         }
                     }
                 }
-         //       System.out.printf("Clicked at (%d, %d), mapped to point %d%n", x, y, space);
 
                 if (evt.getButton() == MouseEvent.BUTTON1) {
                     if (firstClick == -1)
@@ -158,7 +157,7 @@ public class XIIBoardView extends BGBoardView {
         g2d.setColor(Color.BLACK);
         for (int space = 1; space <= 36; space++) {
             int[] pos = getSpacePosition(space);
-            String text = String.valueOf(space);
+            String text = String.valueOf(37-space);
             int tx = pos[0] + squareSize / 2 - g.getFontMetrics().stringWidth(text) / 2;
             int ty = pos[1] + squareSize - 5;
             g2d.drawString(text, tx, ty);
