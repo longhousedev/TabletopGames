@@ -26,11 +26,6 @@ import java.util.List;
  * No window is ever shown and no screenshot is taken — painting is done via {@code printAll}, so the
  * output is deterministic and does not require focus or an unoccluded display.
  * <p>
- * Usage:
- * <pre>
- *   java -cp ... gui.StateRenderer input=G13/P1_Tick1230.json
- *   java -cp ... gui.StateRenderer input=G13 output=renders fullPanel=true
- * </pre>
  * Arguments (key=value):
  * <ul>
  *   <li>{@code input}     - path to a saved-state JSON file, or a directory of {@code *.json} files (batch mode).</li>
@@ -50,7 +45,7 @@ public class StateRenderer {
         boolean fullPanel = Utils.getArg(args, "fullPanel", false);
 
         if (input.isEmpty()) {
-            System.out.println("Usage: gui.StateRenderer input=<file-or-dir> [output=<file-or-dir>] [game=XIIScripta] [fullPanel=false]");
+            System.out.println("Usage: input=<file-or-dir> [output=<file-or-dir>] [game=XIIScripta] [fullPanel=false]");
             return;
         }
 
@@ -113,10 +108,10 @@ public class StateRenderer {
      *                  the board view (the component placed at {@link BorderLayout#CENTER} by the GUI manager).
      */
     public static BufferedImage renderToImage(GameType gameType, File stateFile, boolean fullPanel) {
-        // 1. Load the saved state (same approach as RoundRobinTournament).
+        // 1. Load the saved state
         AbstractGameState state = JSONUtils.loadClassFromFile(stateFile.getAbsolutePath());
 
-        // 2. Wrap it in a Game that owns the matching forward model, then install the loaded state.
+        // 2. Wrap it in a Game for the matching forward model, then install the loaded state.
         List<AbstractPlayer> players = new ArrayList<>();
         for (int i = 0; i < state.getNPlayers(); i++)
             players.add(new RandomPlayer());
@@ -129,9 +124,9 @@ public class StateRenderer {
         ActionController ac = new ActionController();
         AbstractGUIManager gui = gameType.createGUIManager(gamePanel, gameInstance, ac);
 
-        // 4. Populate the view with the loaded state (showActions = false: this is a static snapshot).
+        // 4. Populate the view with the loaded state
         int currentPlayer = state.getCurrentPlayer();
-        gui.update(players.get(currentPlayer), state, false);
+        gui.update(players.get(currentPlayer), state, true);
 
         // 5. Choose what to capture: the board view only (default) or the whole panel.
         Component target = gamePanel;
