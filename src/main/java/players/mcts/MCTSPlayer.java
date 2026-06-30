@@ -331,6 +331,9 @@ public class MCTSPlayer extends AbstractPlayer implements IAnyTimePlayer, IHasSt
     public int getRootVisits() {
         return root.getVisits();
     }
+    public SingleTreeNode getRoot() {
+        return root;
+    }
 
     @Override
     public void finalizePlayer(AbstractGameState state) {

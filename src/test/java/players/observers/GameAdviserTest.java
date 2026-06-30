@@ -64,12 +64,12 @@ public class GameAdviserTest {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String header = reader.readLine();
             assertNotNull("Header should not be null", header);
-            assertEquals("PlayerID\tAgentName\tAgentAction\tAgentValue\tAdviserAction\tAdviserValue\tGameID\tTurn\tRound\tTick", header);
-            
+            assertEquals("PlayerID\tAgentName\tAgentAction\tAgentValue\tAgentVisits\tAdviserAction\tAdviserValue\tAdviserVisits\tTotalVisits\tGameID\tTurn\tRound\tTick", header);
+
             String logLine = reader.readLine();
             assertNotNull("Log line should not be null", logLine);
             String[] parts = logLine.split("\t");
-            assertEquals("Should have 10 parts", 10, parts.length);
+            assertEquals("Should have 13 parts", 13, parts.length);
         } finally {
             file.delete();
         }
@@ -144,7 +144,7 @@ public class GameAdviserTest {
             String logLine = reader.readLine();
             assertNotNull("Log line should not be null", logLine);
             String[] parts = logLine.split("\t");
-            assertEquals("Should have 10 parts", 10, parts.length);
+            assertEquals("Should have 13 parts", 13, parts.length);
             // Check that values are not "0.0" if possible, but TicTacToe might have 0.0 values.
             // At least it didn't crash.
         } finally {

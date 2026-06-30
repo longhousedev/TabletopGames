@@ -428,6 +428,28 @@ public class SingleTreeNode {
         return stats == null ? 0 : stats.nVisits;
     }
 
+    public int actionValidVisits(AbstractAction action) {
+        ActionStats stats = actionValues.get(action);
+        return stats == null ? 0 : stats.validVisits;
+    }
+
+    /**
+     * The action-heuristic value estimate for an action (as computed for move ordering / progressive bias),
+     * or 0.0 if none has been recorded.
+     */
+    public double actionHeuristicValue(AbstractAction action) {
+        return actionValueEstimates.getOrDefault(action, 0.0);
+    }
+
+    /**
+     * The actions that are currently valid at this node (those available from the open-loop state of the
+     * most recent iteration). Note this can differ from {@link #getChildren()} keys, which may include
+     * actions retained from a reused tree that are no longer valid.
+     */
+    public List<AbstractAction> getActionsFromOpenLoopState() {
+        return actionsFromOpenLoopState;
+    }
+
     private int validVisitsFor(AbstractAction action) {
         if (params.information == Closed_Loop)
             return nVisits;

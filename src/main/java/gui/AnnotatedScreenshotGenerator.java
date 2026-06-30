@@ -176,45 +176,13 @@ public class AnnotatedScreenshotGenerator {
         }
     }
 
-    /** Adds a header strip above the rendered board carrying the agent's and adviser's chosen actions. */
+    /** Adds the agent's and adviser's chosen actions in a strip below the rendered board. */
     private static BufferedImage annotate(BufferedImage board, String[] adv) {
         String agentLine = "Agent:   " + adv[ADV_AGENT_ACTION] + "   (" + adv[ADV_AGENT_VALUE] + ")";
         String adviserLine = "Adviser: " + adv[ADV_ADVISER_ACTION] + "   (" + adv[ADV_ADVISER_VALUE] + ")";
-
-        Font font = new Font(Font.SANS_SERIF, Font.BOLD, 16);
-        int pad = 8, lineGap = 4;
-        // Measure with a scratch graphics context.
-        BufferedImage scratch = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
-        Graphics2D sg = scratch.createGraphics();
-        sg.setFont(font);
-        FontMetrics fm = sg.getFontMetrics();
-        int lineH = fm.getHeight();
-        int textW = Math.max(fm.stringWidth(agentLine), fm.stringWidth(adviserLine));
-        sg.dispose();
-
-        int stripH = pad * 2 + lineH * 2 + lineGap;
-        int w = Math.max(board.getWidth(), textW + pad * 2);
-        int h = board.getHeight() + stripH;
-
-        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = out.createGraphics();
-        g.setColor(Color.WHITE);
-        g.fillRect(0, 0, w, h);
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(font);
-
-        int baseline = pad + fm.getAscent();
-        g.setColor(new Color(0x10, 0x10, 0x10));
-        g.drawString(agentLine, pad, baseline);
-        g.setColor(new Color(0x00, 0x66, 0x00));
-        g.drawString(adviserLine, pad, baseline + lineH + lineGap);
-
-        // Separator line, then the board below the strip.
-        g.setColor(Color.LIGHT_GRAY);
-        g.drawLine(0, stripH - 1, w, stripH - 1);
-        g.drawImage(board, 0, stripH, null);
-        g.dispose();
-        return out;
+        return StateRenderer.withTextBelow(board,
+                List.of(agentLine, adviserLine),
+                List.of(new Color(0x10, 0x10, 0x10), new Color(0x00, 0x66, 0x00)));
     }
 
     private static File findAdviserFile(File root) {

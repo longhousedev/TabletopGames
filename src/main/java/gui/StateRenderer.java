@@ -110,7 +110,18 @@ public class StateRenderer {
     public static BufferedImage renderToImage(GameType gameType, File stateFile, boolean fullPanel) {
         // 1. Load the saved state
         AbstractGameState state = JSONUtils.loadClassFromFile(stateFile.getAbsolutePath());
+        return renderToImage(gameType, state, fullPanel);
+    }
 
+    /**
+     * Renders a live (in-memory) {@link AbstractGameState} to an image, going through the game's real
+     * GUI components. This is the painting half of {@link #renderToImage(GameType, File, boolean)} and
+     * is used by observers that want to render a state they already hold (rather than load from file).
+     *
+     * @param fullPanel if true, render the whole game panel (board + info panel); otherwise render only
+     *                  the board view (the component placed at {@link BorderLayout#CENTER} by the GUI manager).
+     */
+    public static BufferedImage renderToImage(GameType gameType, AbstractGameState state, boolean fullPanel) {
         // 2. Wrap it in a Game for the matching forward model, then install the loaded state.
         List<AbstractPlayer> players = new ArrayList<>();
         for (int i = 0; i < state.getNPlayers(); i++)
@@ -145,9 +156,60 @@ public class StateRenderer {
         int h = Math.max(1, target.getHeight());
         BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = img.createGraphics();
+        // A TYPE_INT_RGB image initialises to black; fill it white first so any region of the panel that
+        // is not covered by an opaque component (e.g. empty action/history areas in full-panel mode) shows
+        // as white rather than a black band.
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, w, h);
         target.printAll(g);
         g.dispose();
         return img;
+    }
+
+    /**
+     * Returns a new image consisting of {@code image} with the given lines of text drawn in a white strip
+     * <b>below</b> it. Used to annotate rendered states with extra information (e.g. the chosen action, or
+     * the top actions an agent considered). If {@code colors} is non-null it supplies a colour per line
+     * (shorter lists fall back to a dark default).
+     */
+    public static BufferedImage withTextBelow(BufferedImage image, List<String> lines, List<Color> colors) {
+        Font font = new Font(Font.SANS_SERIF, Font.BOLD, 16);
+        int pad = 8, lineGap = 4;
+        Color defaultColor = new Color(0x10, 0x10, 0x10);
+
+        // Measure with a scratch graphics context.
+        BufferedImage scratch = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+        Graphics2D sg = scratch.createGraphics();
+        sg.setFont(font);
+        FontMetrics fm = sg.getFontMetrics();
+        int lineH = fm.getHeight();
+        int textW = lines.stream().mapToInt(fm::stringWidth).max().orElse(0);
+        sg.dispose();
+
+        int stripH = pad * 2 + lineH * lines.size() + lineGap * Math.max(0, lines.size() - 1);
+        int w = Math.max(image.getWidth(), textW + pad * 2);
+        int h = image.getHeight() + stripH;
+
+        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = out.createGraphics();
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, w, h);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setFont(font);
+
+        // The image first, then a separator, then the text below it.
+        g.drawImage(image, 0, 0, null);
+        g.setColor(Color.LIGHT_GRAY);
+        g.drawLine(0, image.getHeight(), w, image.getHeight());
+
+        int baseline = image.getHeight() + pad + fm.getAscent();
+        for (int i = 0; i < lines.size(); i++) {
+            Color c = (colors != null && i < colors.size() && colors.get(i) != null) ? colors.get(i) : defaultColor;
+            g.setColor(c);
+            g.drawString(lines.get(i), pad, baseline + i * (lineH + lineGap));
+        }
+        g.dispose();
+        return out;
     }
 
     // The board view is placed at BorderLayout.CENTER by the backgammon-family GUI managers.
