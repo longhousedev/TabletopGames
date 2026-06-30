@@ -53,7 +53,8 @@ public class GameAdviser implements IGameListener {
             writer = new FileWriter(this.fileName, true);
             File file = new File(this.fileName);
             if (file.length() == 0) {
-                writer.write("PlayerID\tAgentName\tAgentAction\tAgentValue\tAdviserAction\tAdviserValue\tGameID\tTurn\tRound\tTick\n");
+                writer.write("PlayerID\tAgentName\tAgentAction\tAgentValue\tAgentVisits" +
+                        "\tAdviserAction\tAdviserValue\tAdviserVisits\tTotalVisits\tGameID\tTurn\tRound\tTick\n");
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -116,18 +117,23 @@ public class GameAdviser implements IGameListener {
     }
 
     protected void logIntervention(Event event, AbstractAction advisedAction, AbstractPlayer actingPlayer) {
-        if (writer == null){
+        if (writer == null) {
             setupWriter();
             if (writer == null)
                 return;
         }
         double agentValue = player instanceof MCTSPlayer mcts ? mcts.getValue(event.action) : 0.0;
+        int agentVisits = player instanceof MCTSPlayer mcts ? mcts.getVisits(event.action) : 0;
         double adviserValue = player instanceof MCTSPlayer mcts ? mcts.getValue(advisedAction) : 0.0;
+        int adviserVisits = player instanceof MCTSPlayer mcts ? mcts.getVisits(advisedAction) : 0;
+        int totalVisits = player instanceof MCTSPlayer mcts ? mcts.getRootVisits() : 0;
 
         try {
-            writer.write(String.format("%s\t%s\t%s\t%.3g\t%s\t%.3g\t%d\t%d\t%d\t%d\n",
+            writer.write(String.format("%s\t%s\t%s\t%.3g\t%d\t%s\t%.3g\t%d\t%d\t%d\t%d\t%d\t%d\n",
                     event.playerID, actingPlayer.toString(),
-                    event.action.getString(event.state), agentValue, advisedAction.getString(event.state), adviserValue,
+                    event.action.getString(event.state), agentValue, agentVisits,
+                    advisedAction.getString(event.state), adviserValue, adviserVisits,
+                    totalVisits,
                     event.state.getGameID(), event.state.getTurnCounter(), event.state.getRoundCounter(), event.state.getGameTick()));
         } catch (IOException e) {
             throw new RuntimeException(e);
