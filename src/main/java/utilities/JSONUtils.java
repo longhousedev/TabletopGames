@@ -262,11 +262,12 @@ public class JSONUtils {
             return loadClassFromJSON(json);
 
         } catch (ParseException e) {
-            throw new AssertionError("Problem parsing JSON in " + rawData);
+            throw new AssertionError("Problem parsing JSON in " + rawData + "\n" + e.getMessage() + e.getMessage());
         } catch (IOException e) {
-            throw new AssertionError("Problem processing String in " + rawData);
+            throw new AssertionError("Problem processing String in " + rawData + "\n" + e.getMessage() + e.getCause());
         } catch (Exception e) {
-            throw new AssertionError("Problem processing String as classname with no-arg constructor : " + rawData);
+            throw new AssertionError("Problem processing String as classname with no-arg constructor : " + rawData + "\n"
+            + e.getMessage() + e.getCause());
         }
     }
 
