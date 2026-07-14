@@ -20,6 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.spark.sql.catalyst.types.PhysicalArrayType;
 import players.IAnyTimePlayer;
 import players.PlayerFactory;
+import players.learners.AbstractLearner;
 import players.learners.LearnFromData;
 import players.mcts.MCTSExpertIterationListener;
 import players.mcts.MCTSPlayer;
@@ -165,8 +166,8 @@ public class ExpertIteration {
         // Check to see if we are re-starting a previously aborted run
         Pair<Integer, Integer> completedIterations = checkCompletedIterations();
         int restartAtIteration = completedIterations.a;
-        boolean restartWithTuning = completedIterations.b > 0 && !Objects.equals(completedIterations.a, completedIterations.b);
-        iter = restartAtIteration;
+        boolean restartWithTuning = completedIterations.b > 0 && !Objects.equals(completedIterations.a, completedIterations.b)
+                && restartAtIteration < (int) config.get(RunArg.expertIterations);        iter = restartAtIteration;
         if (completedIterations.a > 0 && completedIterations.b > 0) {
             System.out.printf("Restarting from iteration %d (with tuning: %b)%n", restartAtIteration, restartWithTuning);
         }
@@ -511,8 +512,6 @@ public class ExpertIteration {
     }
 
     private RoundRobinTournament runTournament(List<AbstractPlayer> localAgents, Map<RunArg, Object> runGamesConfig) {
-
-
         boolean allDataAsOne = config.get(RunArg.expertTrainingMode) == TrainingMode.Exponential;
         RoundRobinTournament tournament = new RoundRobinTournament(localAgents, gameToPlay, nPlayers, params, runGamesConfig);
         tournament.setTournamentResults(runningTournamentResults);
@@ -544,16 +543,17 @@ public class ExpertIteration {
             };
             String fileName = String.format("State_%s_%02d.txt", prefix, allDataAsOne ? 0 : iter);
             stateDataFilesByIteration[allDataAsOne ? 0 : iter] = dataDir + File.separator + fileName;
+            AbstractLearner stateLearner = loadClass(stateLearnerFile);
             if (stateListener != null) {
                 stateListener = stateListener
                         .setSampleRate(stateSampleRate)
+                        .setStateHeuristic(stateLearner.getHeuristic())
                         .setLogger(new FileStatsLogger(fileName, "\t", allDataAsOne));
                 stateListener.setOutputDirectory(dataDir);
                 tournament.addListener(stateListener);
             }
         }
         if (actionLearnerFile != null) {
-
             actionListener = switch (config.get(RunArg.actionTarget)) {
                 case ActionTarget.Base -> new ActionFeatureListener(actionFeatureVector, stateFeatureVector,
                         Event.GameEvent.ACTION_CHOSEN,
@@ -578,6 +578,7 @@ public class ExpertIteration {
                         oracle.getParameters().setParameterValue("K", 1.0);
                     yield new MCTSExpertIterationListener(oracle, actionFeatureVector, stateFeatureVector,
                             100, 0, stateLearnerFile != null && stateListener == null);
+                    // TODO: MCTS listeners do not currently support Heuristic or FinalHeuristic Targets
                 }
                 // we record the MCTS stats for every action, plus the state features if we are not already recording them with a separate listener
                 default ->

@@ -2,11 +2,13 @@ package core.components;
 
 import core.CoreConstants;
 import core.interfaces.IComponentContainer;
+import core.interfaces.IToJSON;
 import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import utilities.JSONUtils;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -22,7 +24,7 @@ import static core.CoreConstants.VisibilityMode;
  * * Components played on the player's area
  * * Discard pile
  */
-public class Deck<T extends Component> extends Component implements IComponentContainer<T>, Iterable<T> {
+public class Deck<T extends Component> extends Component implements IComponentContainer<T>, Iterable<T>, IToJSON {
 
     protected int capacity;  // Capacity of the deck (maximum number of elements)
     protected List<T> components;  // List of components in this deck
@@ -113,6 +115,70 @@ public class Deck<T extends Component> extends Component implements IComponentCo
             newDeck.add(newcard);
         }
         return newDeck;
+    }
+
+    /**
+     * Serializes the runtime state of this deck to JSON, so that it can be reconstructed via
+     * {@link #loadDeck}. Every component in the deck must itself implement {@link IToJSON} <em>and</em>
+     * expose a constructor taking a {@link JSONObject} (so it can be re-created on load) - this is
+     * the implicit requirement of putting a component into a serializable deck. Each component's JSON
+     * is tagged with its concrete class so it can be reconstructed reflectively. The deck's identity
+     * (componentID), name, ownerId, capacity, visibility mode and the order of its components are
+     * all preserved, so that the reloaded deck is {@code equals()} to the original.
+     *
+     * @throws IllegalStateException if any component in the deck does not implement {@link IToJSON}.
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("name", componentName);
+        json.put("id", componentID);
+        json.put("ownerId", ownerId);
+        json.put("capacity", capacity);
+        json.put("visibility", visibility.name());
+        JSONArray cards = new JSONArray();
+        for (T component : components) {
+            if (component instanceof IToJSON serializable) {
+                JSONObject cardJSON = serializable.toJSON();
+                // tag with the concrete class so loadDeck can reconstruct it via its JSONObject constructor
+                cardJSON.putIfAbsent("class", component.getClass().getName());
+                cards.add(cardJSON);
+            } else
+                throw new IllegalStateException("Cannot serialize deck '" + componentName
+                        + "': component does not implement IToJSON : " + component.getClass().getName());
+        }
+        json.put("cards", cards);
+        return json;
+    }
+
+    /**
+     * Reconstructs a Deck from JSON produced by {@link #toJSON}. Each component is recreated by
+     * recursing into its JSON via {@link JSONUtils#loadClassFromJSON}, which finds the component's
+     * {@link JSONObject} constructor - so every component type in a serializable deck must provide one.
+     *
+     * @param json - the JSON produced by {@link #toJSON}.
+     */
+    public static <T extends Component> Deck<T> loadDeck(JSONObject json) {
+        Deck<T> deck = new Deck<>((String) json.get("name"),
+                ((Number) json.get("ownerId")).intValue(),
+                ((Number) json.get("id")).intValue(),
+                VisibilityMode.valueOf((String) json.get("visibility")));
+        deck.capacity = ((Number) json.get("capacity")).intValue();
+        populateComponents(deck, json);
+        return deck;
+    }
+
+    /**
+     * Appends the serialized components (in their stored order) to the deck's component list, each
+     * reconstructed from its JSON via its {@link JSONObject} constructor. Adds directly to the
+     * underlying list rather than via {@link #add}, so that the original order is preserved exactly
+     * and no subclass add-side-effects (e.g. visibility handling) are triggered.
+     */
+    protected static <T extends Component> void populateComponents(Deck<T> deck, JSONObject json) {
+        JSONArray cards = (JSONArray) json.get("cards");
+        for (Object o : cards)
+            deck.components.add(JSONUtils.loadClassFromJSON((JSONObject) o));
     }
 
     /**

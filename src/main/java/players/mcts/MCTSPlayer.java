@@ -234,7 +234,7 @@ public class MCTSPlayer extends AbstractPlayer implements IAnyTimePlayer, IHasSt
             }
         }
         if (!foundPointInHistory) {
-            String message = String.format("Agent: %s, P%d unable to find matching action in history : %s%n%t%t%b:%s%d%n%s", this, rootPlayer, lastExpected,
+            String message = String.format("Agent: %s, P%d unable to find matching action in history : %s%n\t\t%b:%s%d%n%s", this, rootPlayer, lastExpected,
                     params.reuseTree, params.opponentTreePolicy, params.maxTreeDepth,
                     history.reversed().stream().limit(20).map(p -> String.format("%d:%s", p.a, p.b)).collect(Collectors.joining("\n\t\t")));
             System.out.println(message);
@@ -306,8 +306,33 @@ public class MCTSPlayer extends AbstractPlayer implements IAnyTimePlayer, IHasSt
 
         if (root.children.size() > 3 * actions.size() && !(root instanceof MCGSNode) && !getParameters().reuseTree && !getParameters().actionSpace.equals(gameState.getCoreGameParameters().actionSpace))
             throw new AssertionError(String.format("Unexpectedly large number of children: %d with action size of %d", root.children.size(), actions.size()));
-        lastAction = new Pair<>(gameState.getCurrentPlayer(), root.bestAction());
+        lastAction = Pair.of(gameState.getCurrentPlayer(), root.bestAction());
         return lastAction.b.copy();
+    }
+
+    @Override
+    public void overrideAction(AbstractAction originalAction, AbstractAction override) {
+        if (!lastAction.b.equals(originalAction)) {
+            throw new IllegalArgumentException("Original action does not match the last action taken" + lastAction.b + " vs " + originalAction);
+        }
+        lastAction = Pair.of(lastAction.a, override.copy());
+    }
+
+    public double getValue(AbstractAction action) {
+        return root.getValue(action);
+    }
+    // Proportion of visits - this does not take account of nValidVisits (which would be especially important away from root node)
+    public double getVisitProportion(AbstractAction action) {
+        return root.actionVisits(action) / (double) root.getVisits();
+    }
+    public int getVisits(AbstractAction action) {
+        return root.actionVisits(action);
+    }
+    public int getRootVisits() {
+        return root.getVisits();
+    }
+    public SingleTreeNode getRoot() {
+        return root;
     }
 
     @Override

@@ -171,6 +171,7 @@ public class CatanForwardModel extends StandardForwardModel {
                     switch (opt.stage) {
                         case Offer:
                             gs.setTurnOwner(opt.otherPlayerID);
+                            break;
                         case CounterOffer:
                             gs.setTurnOwner(opt.offeringPlayerID);
                     }

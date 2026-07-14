@@ -1,15 +1,9 @@
 package players.mcts;
 
-import com.sun.xml.bind.v2.runtime.unmarshaller.XsiNilLoader;
 import core.AbstractGameState;
 import core.actions.AbstractAction;
-import utilities.Pair;
 
 import java.util.*;
-import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
-import static players.mcts.MCTSEnums.Information.Closed_Loop;
 
 /**
  * Opponent Move Abstraction adds a set of statistics at each node that ignore (abstract out) the decisions

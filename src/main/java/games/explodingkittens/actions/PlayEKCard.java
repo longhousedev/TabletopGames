@@ -2,12 +2,14 @@ package games.explodingkittens.actions;
 
 import core.AbstractGameState;
 import core.actions.AbstractAction;
+import core.interfaces.IToJSON;
 import games.explodingkittens.ExplodingKittensGameState;
 import games.explodingkittens.cards.ExplodingKittensCard.CardType;
+import org.json.simple.JSONObject;
 
 import java.util.Objects;
 
-public class PlayEKCard extends AbstractAction {
+public class PlayEKCard extends AbstractAction implements IToJSON {
 
     public final CardType cardType;
     public final int target;
@@ -20,6 +22,20 @@ public class PlayEKCard extends AbstractAction {
     public PlayEKCard(CardType cardType, int target) {
         this.cardType = cardType;
         this.target = target;
+    }
+
+    public PlayEKCard(JSONObject json) {
+        this(CardType.valueOf((String) json.get("cardType")), ((Number) json.get("target")).intValue());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("class", getClass().getName());
+        json.put("cardType", cardType.name());
+        json.put("target", target);
+        return json;
     }
 
     @Override

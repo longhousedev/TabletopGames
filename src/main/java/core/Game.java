@@ -2,8 +2,7 @@ package core;
 
 import core.actions.AbstractAction;
 import core.actions.DoNothing;
-import core.interfaces.IExtendedSequence;
-import core.interfaces.IPrintable;
+import core.interfaces.*;
 import core.turnorders.ReactiveTurnOrder;
 import evaluation.listeners.IGameListener;
 import evaluation.metrics.Event;
@@ -29,12 +28,12 @@ import players.rmhc.RMHCPlayer;
 import players.simple.FirstActionPlayer;
 import players.simple.OSLAPlayer;
 import players.simple.RandomPlayer;
-import utilities.Pair;
-import utilities.Utils;
+import utilities.*;
 
 import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -67,14 +66,9 @@ public class Game {
     private int nActionsPerTurn, nActionsPerTurnSum, nActionsPerTurnCount;
     private boolean pause, stop;
     private boolean debug = false;
-    // Video recording
-    private Rectangle areaBounds;
-    private boolean recordingVideo = false;
-    String fileName = "output.mp4";
-    String formatName = "mp4";
-    String codecName = null;
-    int snapsPerSecond = 10;
     private int turnPause;
+    protected AbstractAction overrideAction;
+    protected String savedStateDirectory = "SavedStates";
 
     /**
      * Game constructor. Receives a list of players, a forward model and a game state. Sets unique and final
@@ -160,11 +154,6 @@ public class Game {
             frame.setFrameProperties();
             frame.validate();
             frame.pack();
-
-            // Video recording setup
-            if (game.recordingVideo) {
-                game.areaBounds = new Rectangle(0, 0, frame.getWidth(), frame.getHeight());
-            }
 
             Timer guiUpdater = new Timer((int) game.getCoreParameters().frameSleepMS, event -> game.updateGUI(gui, frame));
             guiUpdater.start();
@@ -252,8 +241,11 @@ public class Game {
                 // Allow player to initialize
                 player.initializePlayer(observation);
             }
-        int gameID = idFountain.incrementAndGet();
-        gameState.setGameID(gameID);
+        resetStats();
+    }
+
+    public void reset(AbstractGameState gameState) {
+        this.gameState = gameState;
         resetStats();
     }
 
@@ -271,6 +263,8 @@ public class Game {
         nActionsPerTurn = 1;
         nActionsPerTurnCount = 0;
         lastPlayer = -1;
+        int gameID = idFountain.incrementAndGet();
+        gameState.setGameID(gameID);
     }
 
     /**
@@ -481,7 +475,20 @@ public class Game {
         } else {
             // Resolve action and game rules, time it
             s = System.nanoTime();
-            // we copy the action before using it..so that the action returned by oneAction() does not have a state link
+            if (overrideAction != null) {
+                currentPlayer.overrideAction(action, overrideAction);
+                action = overrideAction;
+               // System.out.println("Overriding action with " + overrideAction);
+                overrideAction = null;
+            }
+            // if requested, save a copy of the full undeterminized game state (we do this in the Game loop to avoid passing the real state to agents)
+            if (action.saveGame() && gameState instanceof IToJSON serialisableGameState) {
+                String directory = String.format("%s%s%s%sG%d", savedStateDirectory, File.separator, gameType.name(), File.separator, gameState.getGameID());
+                Utils.createDirectory(directory);
+                String filename = String.format("%sP%d_Tick%d.json", directory + File.separator, activePlayer, gameState.getGameTick());
+                JSONUtils.writeJSON(serialisableGameState.toJSON(), filename);
+            }
+            // we copy the action before using it...so that the action returned by oneAction() does not have a state link
             forwardModel.next(gameState, action.copy());
             nextTime = (System.nanoTime() - s);
         }
@@ -582,6 +589,14 @@ public class Game {
     }
 
     /**
+     * May be called by a third party observer (i.e. a listener) if it interjects an action to override a player
+     * @param overrideAction
+     */
+    public void setOverrideAction(AbstractAction overrideAction) {
+        this.overrideAction = overrideAction;
+    }
+
+    /**
      * Retrieves the number of game loop repetitions performed in this game.
      *
      * @return - tick number
@@ -641,6 +656,13 @@ public class Game {
     public void clearListeners() {
         listeners.clear();
         getGameState().clearListeners();
+    }
+
+    public void setSavedStatesDirectory(String dir) {
+        savedStateDirectory = dir;
+    }
+    public String getSavedStatesDirectory() {
+        return savedStateDirectory;
     }
 
     /**
