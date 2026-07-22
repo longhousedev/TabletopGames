@@ -1,0 +1,57 @@
+{
+  "skill_name": "tag-game-creation",
+  "evals": [
+    {
+      "id": 0,
+      "name": "nim-misere",
+      "prompt": "I want to add the game Nim to this framework. Rules: 2 players, single heap starting with 21 matchsticks, players alternate removing 1, 2 or 3 sticks, and the player forced to take the LAST stick loses (misere version). Starting heap size and max sticks per take should be configurable. Make it a proper game in the framework so agents like MCTS can play it, and add unit tests for the rules and game end.",
+      "expected_output": "A games/nim package with GameState/ForwardModel/Parameters/actions, registered in games.GameType, compiling under mvn, with JUnit tests covering setup, legal actions, and the misere end condition (player taking last stick gets LOSE_GAME).",
+      "files": [],
+      "assertions": [
+        "package-structure: a new package exists under src/main/java/games/ containing a GameState extending AbstractGameState, a ForwardModel extending StandardForwardModel (or AbstractForwardModel), and a Parameters class extending AbstractParameters (or TunableParameters)",
+        "gametype-registration: games/GameType.java contains a new enum entry for the game referencing those three classes, with 2 min and 2 max players",
+        "parameters-not-hardcoded: starting heap size and max sticks per take are fields of the Parameters class and the ForwardModel/actions read them from getGameParameters() rather than hard-coding 21/3",
+        "copy-equals-hash: GameState _copy deep-copies every state field, and _equals/hashCode include every state field",
+        "misere-end-condition: the code assigns LOSE_GAME to the player who takes the last stick and WIN_GAME to the opponent, with game status set to GAME_END",
+        "action-contract: the take-sticks action stores only primitives, and implements copy(), equals(), hashCode() and toString()",
+        "compiles: RESULTS.md reports mvn compile succeeded",
+        "tests-pass: JUnit tests exist under src/test/java for the game and RESULTS.md reports them passing, including at least one test of the game-end/misere condition"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "memory-hidden-info",
+      "prompt": "Can you implement the card game Memory (aka Concentration) in this framework? 2-4 players. Setup: 8 pairs of cards shuffled face-down in a 4x4 grid (grid size should scale if you change the number of pairs). On your turn you flip two cards face up, one at a time. If they match you keep the pair and take another turn; if not they're turned face down again and play passes on. Game ends when all pairs are claimed; most pairs wins. It's important that the hidden information is handled correctly so MCTS can't cheat by looking at face-down cards. Include unit tests.",
+      "expected_output": "A games/memory (or similar) package with correct hidden-information handling: _copy(playerId) must not leak face-down card identities (redeterminisation), two-flip turn structure (extended sequence or two-step actions), extra turn on match, registered in GameType, compiling, with tests including one for the copy/hiding behaviour.",
+      "files": [],
+      "assertions": [
+        "package-structure: a new package exists under src/main/java/games/ with GameState/ForwardModel/Parameters classes extending the correct framework base classes",
+        "gametype-registration: games/GameType.java contains a new enum entry for the game with 2-4 players",
+        "hidden-info-redeterminised: GameState._copy(playerId) does NOT faithfully copy face-down card identities for playerId != -1 - unrevealed cards are shuffled/redealt (redeterminisation) so a search agent cannot read them",
+        "two-step-flip: the player chooses the second card AFTER seeing the first card's identity (two sequential decisions per turn, e.g. two flip actions or an IExtendedSequence), not one combined action choosing both cards blind",
+        "match-grants-extra-turn: on a match the same player takes another turn (pair claimed, no turn advance); on a non-match both cards return face-down and the turn passes",
+        "copy-equals-hash: GameState _copy/_equals/hashCode cover all state fields, and flip actions implement copy/equals/hashCode storing only primitives or component IDs",
+        "compiles: RESULTS.md reports mvn compile succeeded",
+        "tests-pass: JUnit tests exist and pass per RESULTS.md, including at least one test of the copy/hiding behaviour"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "pig-push-your-luck",
+      "prompt": "add the dice game Pig to the framework please. 2-6 players. on your turn you repeatedly choose: ROLL a d6 or HOLD. roll a 1 = you lose everything accumulated this turn and your turn ends. roll 2-6 = add to your turn total and choose again. HOLD banks your turn total into your score and ends your turn. first player to reach 50 points wins (make the target a parameter). i want unit tests and please make sure the forward model tester passes before you call it done",
+      "expected_output": "A games/pig package where the same player keeps acting until a 1 or Hold (turn does not auto-advance), dice rolls use the state RNG, target score is a parameter, registered in GameType, compiling, tests pass, and evaluation.ForwardModelTester runs clean over multiple games.",
+      "files": [],
+      "assertions": [
+        "package-structure: a new package exists under src/main/java/games/ with GameState/ForwardModel/Parameters classes extending the correct framework base classes",
+        "gametype-registration: games/GameType.java contains a new enum entry for the game with 2-6 players",
+        "seeded-rng: dice rolls use the game state's seeded RNG (state.getRnd() or a Dice component rolled with it), never a fresh unseeded Random",
+        "turn-continuation: after rolling 2-6 the same player acts again (no endPlayerTurn); the turn ends only on rolling a 1 (turn total lost) or choosing Hold (turn total banked)",
+        "target-is-parameter: the winning score threshold is a Parameters field, not a hard-coded 50",
+        "copy-equals-hash: GameState _copy/_equals/hashCode cover all state fields (including per-player scores and the current turn total), and Roll/Hold actions implement copy/equals/hashCode",
+        "compiles: RESULTS.md reports mvn compile succeeded",
+        "tests-pass: JUnit tests exist and pass per RESULTS.md",
+        "forward-model-tester: RESULTS.md shows evaluation.ForwardModelTester was actually run over at least one full game and reported no copy/equality failures"
+      ]
+    }
+  ]
+}
