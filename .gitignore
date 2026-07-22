@@ -43,3 +43,7 @@ src/pytag/env/
 metrics/out/*
 treeRecorder*
 .vscode/*
+
+# Claude Code: temporary agent worktrees and skill eval workspaces
+.claude/worktrees/
+.claude/skills/*-workspace/
